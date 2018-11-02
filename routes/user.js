@@ -1,11 +1,14 @@
 const express = require('express');
+const crypto = require('crypto');
 const User = require('../models/user');
+const config = require('../config');
 const authMiddleware = require('../middlewares/auth');
 
 const router = express.Router();
 
 router.post('/', (req, res) => {
   const { username, password, nickname, email } = req.body;
+  const encrypted = crypto.createHmac('sha512', config["password-secret"]).update(password).digest('base64');
 
   User.findOne({username: username})
     .then(user => {
@@ -15,7 +18,7 @@ router.post('/', (req, res) => {
       else {
         new User({
           username: username,
-          password: password,
+          password: encrypted,
           nickname: nickname,
           email: email
         }).save();

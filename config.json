@@ -1,4 +1,5 @@
 {
   "jwt-secret": "secret",
+  "password-secret": "secret",
   "mongodb-uri": "mongodb://localhost:27017/backend"
 }
