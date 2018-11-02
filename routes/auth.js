@@ -1,12 +1,14 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const authMiddleware = require('../middlewares/auth');
+const jsonMiddleware = require('../middlewares/json');
 const crypto = require('crypto');
 const config = require('../config');
 const User = require('../models/user');
 
 const router = express.Router();
 
+router.post('/', jsonMiddleware({username: 'string', password: 'string'}));
 router.post('/', (req, res) => {
   const {username, password} = req.body;
   const encrypted = crypto.createHmac('sha512', config["password-secret"]).update(password).digest('base64');
@@ -49,6 +51,7 @@ router.post('/', (req, res) => {
               resolve1(token);
             }
           ));
+
           Promise.all([access, refresh]).then(values => {
             resolve({access: values[0], refresh: values[1]});
           }).catch(error => {

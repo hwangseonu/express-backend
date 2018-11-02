@@ -3,9 +3,11 @@ const crypto = require('crypto');
 const User = require('../models/user');
 const config = require('../config');
 const authMiddleware = require('../middlewares/auth');
+const jsonMiddleware = require('../middlewares/json');
 
 const router = express.Router();
 
+router.post('/', jsonMiddleware({username: 'string', password: 'string', nickname: 'string', email: 'string'}));
 router.post('/', (req, res) => {
   const { username, password, nickname, email } = req.body;
   const encrypted = crypto.createHmac('sha512', config["password-secret"]).update(password).digest('base64');
