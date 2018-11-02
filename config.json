@@ -1,5 +1,9 @@
 {
-  "jwt-secret": "secret",
+  "jwt": {
+    "secret": "secret",
+    "access-expire": "1h",
+    "refresh-expire": "30d"
+  },
   "password-secret": "secret",
   "mongodb-uri": "mongodb://localhost:27017/backend"
 }

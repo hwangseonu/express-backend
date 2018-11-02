@@ -20,7 +20,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.set('jwt-secret', config["jwt-secret"]);
 
 app.use('/users', user);
 app.use('/auth', auth);

@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken');
+const config = require('../config');
 const User = require('../models/user');
 
-const middleware = (req, res, next) => {
+const middleware = type => (req, res, next) => {
   let token = req.headers.authorization;
 
   if (!token || !token.startsWith('Bearer ')) {
@@ -13,7 +14,7 @@ const middleware = (req, res, next) => {
   token = token.replace('Bearer ', '');
 
   new Promise((resolve, reject) => {
-    jwt.verify(token, req.app.get('jwt-secret'), (err, decoded) => {
+    jwt.verify(token, config.jwt.secret, {subject: type}, (err, decoded) => {
       if (err) reject(err);
       resolve(decoded);
     })
@@ -27,12 +28,18 @@ const middleware = (req, res, next) => {
             next();
           }
         })
+        .catch(error => {
+          return res.status(422).json({
+            message: error.message
+          })
+        })
     })
     .catch(error => {
-      return res.status(401).json({
+      return res.status(422).json({
         message: error.message
       })
     })
 };
+
 
 module.exports = middleware;

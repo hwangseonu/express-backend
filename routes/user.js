@@ -34,7 +34,7 @@ router.post('/', (req, res) => {
     })
 });
 
-router.get('/', authMiddleware);
+router.get('/', authMiddleware('access'));
 router.get('/', (req, res) => {
   res.json({
     username: req.user.username,

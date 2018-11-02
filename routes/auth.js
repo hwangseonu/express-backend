@@ -1,7 +1,8 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
+const authMiddleware = require('../middlewares/auth');
 const crypto = require('crypto');
 const config = require('../config');
-const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
 const router = express.Router();
@@ -9,7 +10,7 @@ const router = express.Router();
 router.post('/', (req, res) => {
   const {username, password} = req.body;
   const encrypted = crypto.createHmac('sha512', config["password-secret"]).update(password).digest('base64');
-  const secret = req.app.get('jwt-secret');
+  const secret = config.jwt.secret;
 
   User.findOne({username: username})
     .then(user => {
@@ -28,7 +29,7 @@ router.post('/', (req, res) => {
             },
             secret,
             {
-              expiresIn: '1h',
+              expiresIn: config.jwt["access-expire"],
               subject: 'access'
             },  (err, token) => {
               if (err) reject1(err);
@@ -41,7 +42,7 @@ router.post('/', (req, res) => {
             },
             secret,
             {
-              expiresIn: '30d',
+              expiresIn: config.jwt["refresh-expire"],
               subject: 'refresh'
             },  (err, token) => {
               if (err) reject1(err);
@@ -60,8 +61,30 @@ router.post('/', (req, res) => {
       res.json(tokens)
     })
     .catch(error => {
-      res.status(403).json({message: error.message})
+      res.status(401).json({message: error.message})
     });
+});
+
+router.get('/refresh', authMiddleware('refresh'));
+router.get('/refresh', (req, res) => {
+  const secret = config.jwt.secret;
+  jwt.sign(
+    {
+      username: req.user.username
+    },
+    secret,
+    {
+      expiresIn: config.jwt["access-expire"],
+      subject: 'access'
+    }, (err, token) => {
+      if (err) {
+        res.status(422).json({message: err.message})
+      } else {
+        res.json({
+          access: token
+        })
+      }
+    })
 });
 
 module.exports = router;
