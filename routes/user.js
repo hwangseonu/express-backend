@@ -1,5 +1,6 @@
 const express = require('express');
 const User = require('../models/user');
+const authMiddleware = require('../middlewares/auth');
 
 const router = express.Router();
 
@@ -28,6 +29,15 @@ router.post('/', (req, res) => {
         message: error.message
       })
     })
+});
+
+router.get('/', authMiddleware);
+router.get('/', (req, res) => {
+  res.json({
+    username: req.user.username,
+    nickname: req.user.nickname,
+    email: req.user.email
+  })
 });
 
 module.exports = router;
