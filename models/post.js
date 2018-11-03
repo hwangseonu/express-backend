@@ -9,7 +9,7 @@ const commentSchema = new Schema({
 }, {versionKey: false});
 
 const postSchema = new Schema({
-  writer: { type: Schema.Types.ObjectId, ref: 'User' },
+  writer: { type: Schema.Types.ObjectId, index: true, ref: 'User' },
   title: String,
   content: String,
   createAt: { type: Date, default: Date.now },
