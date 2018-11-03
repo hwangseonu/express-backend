@@ -20,39 +20,10 @@ router.post('/', (req, res) => {
         throw new Error('Could not find user')
       } else {
         return new Promise((resolve, reject) => {
-
           if (user.password !== encrypted) {
             reject(new Error('incorrect password'))
           }
-
-          const access = new Promise((resolve1, reject1) =>  jwt.sign(
-            {
-              username: user.username,
-            },
-            secret,
-            {
-              expiresIn: config.jwt["access-expire"],
-              subject: 'access'
-            },  (err, token) => {
-              if (err) reject1(err);
-              resolve1(token);
-            }
-          ));
-          const refresh = new Promise((resolve1, reject1) => jwt.sign(
-            {
-              username: user.username
-            },
-            secret,
-            {
-              expiresIn: config.jwt["refresh-expire"],
-              subject: 'refresh'
-            },  (err, token) => {
-              if (err) reject1(err);
-              resolve1(token);
-            }
-          ));
-
-          Promise.all([access, refresh]).then(values => {
+          Promise.all([generateToken('access', secret), generateToken('refresh', secret)]).then(values => {
             resolve({access: values[0], refresh: values[1]});
           }).catch(error => {
             reject(error)
@@ -89,5 +60,21 @@ router.get('/refresh', (req, res) => {
       }
     })
 });
+
+const generateToken = (type, secret) => {
+  return new Promise((resolve1, reject1) => jwt.sign(
+    {
+      username: user.username,
+    },
+    secret,
+    {
+      expiresIn: config.jwt[type + "-expire"],
+      subject: type
+    }, (err, token) => {
+      if (err) reject1(err);
+      resolve1(token);
+    }
+  ));
+};
 
 module.exports = router;
