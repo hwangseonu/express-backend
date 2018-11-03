@@ -88,13 +88,14 @@ router.post('/:pid/comments', (req, res) => {
 const getComments = comments => {
   return comments.map(comment => {
     return new Promise((resolve, reject) => {
-      User.findOne({_id: comment.author}).then(user => {
-        resolve({
-          comment_id: comment._id,
-          author: user.nickname,
-          content: comment.content
-        })
-      }).catch(error => reject(error))
+      User.findOne({_id: comment.author})
+        .then(user => {
+          resolve({
+            comment_id: comment._id,
+            author: !user ? '탈퇴한 사용자' : user.nickname,
+            content: comment.content
+          })
+        }).catch(error => reject(error))
     })
   })
 };
@@ -106,7 +107,7 @@ const getPosts = posts => {
         .then(comments => {
           resolve({
             post_id: post._id,
-            author: post.author.nickname,
+            author: !post.author ? '탈퇴한 사용자' : post.author.nickname,
             title: post.title,
             content: post.content,
             comments: comments
