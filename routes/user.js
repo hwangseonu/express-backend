@@ -18,7 +18,7 @@ router.post('/', (req, res) => {
         throw new Error('username already exists!');
       }
       else {
-        new User({
+        return new User({
           username: username,
           password: encrypted,
           nickname: nickname,

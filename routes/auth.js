@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.post('/', jsonMiddleware({username: 'string', password: 'string'}));
 router.post('/', (req, res) => {
-  const {username, password} = req.body;
+  const { username, password } = req.body;
   const encrypted = crypto.createHmac('sha512', config["password-secret"]).update(password).digest('base64');
   const secret = config.jwt.secret;
 
@@ -23,7 +23,7 @@ router.post('/', (req, res) => {
           if (user.password !== encrypted) {
             reject(new Error('incorrect password'))
           }
-          Promise.all([generateToken('access', secret), generateToken('refresh', secret)]).then(values => {
+          Promise.all([generateToken(username, 'access', secret), generateToken(username, 'refresh', secret)]).then(values => {
             resolve({access: values[0], refresh: values[1]});
           }).catch(error => {
             reject(error)
@@ -61,10 +61,10 @@ router.get('/refresh', (req, res) => {
     })
 });
 
-const generateToken = (type, secret) => {
+const generateToken = (username, type, secret) => {
   return new Promise((resolve1, reject1) => jwt.sign(
     {
-      username: user.username,
+      username: username,
     },
     secret,
     {

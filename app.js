@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 
 const user = require('./routes/user');
 const auth = require('./routes/auth');
+const post = require('./routes/post');
 
 const path = require('path');
 const config = require('./config');
@@ -23,11 +24,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/users', user);
 app.use('/auth', auth);
+app.use('/posts', post);
 
 const server = http.createServer(app);
 server.listen(port, () => console.log(`server is running on port ${port}`));
 
-mongoose.connect(config["mongodb-uri"], {useNewUrlParser: true}).catch(error => console.log(error.message));
+mongoose.connect(config["mongodb-uri"], {useNewUrlParser: true, useCreateIndex: true}).catch(error => console.log(error.message));
 const db = mongoose.connection;
 db.on('error', console.error);
 db.once('open', () => console.log('connected to mongodb server'));
