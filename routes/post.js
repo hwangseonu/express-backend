@@ -34,7 +34,7 @@ router.get('/', (req, res) => {
       return getPosts(posts)
     })
     .then(promises => {
-      Promise.all(promises).then(values => res.json(values))
+      Promise.all(promises).then(values => res.json(values)).catch(error => res.status(404).json({message: error.message}))
     })
 });
 
@@ -53,6 +53,7 @@ router.get('/:pid', (req, res) => {
               comments: comments
             })
           })
+          .catch(error => res.status(404).json({message: error.message}))
       }
     })
     .catch(error => {
@@ -86,21 +87,21 @@ router.post('/:pid/comments', (req, res) => {
 
 const getComments = comments => {
   return comments.map(comment => {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       User.findOne({_id: comment.author}).then(user => {
         resolve({
           comment_id: comment._id,
           author: user.nickname,
           content: comment.content
         })
-      })
+      }).catch(error => reject(error))
     })
   })
 };
 
 const getPosts = posts => {
   return posts.map(post => {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       Promise.all(getComments(post.comments))
         .then(comments => {
           resolve({
@@ -111,6 +112,7 @@ const getPosts = posts => {
             comments: comments
           })
         })
+        .catch(error => reject(error))
     })
   })
 };
