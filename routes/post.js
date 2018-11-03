@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Post = require('../models/post');
+const User = require('../models/user');
 const authMiddleware = require('../middlewares/auth');
 const jsonMiddleware = require('../middlewares/json');
 
@@ -9,9 +10,10 @@ router.post('/', jsonMiddleware({title: 'string', content: 'string'}));
 router.post('/', (req, res) => {
   const { title, content } = req.body;
   const post = new Post({
-    writer: req.user,
+    author: req.user,
     title: title,
-    content: content
+    content: content,
+    comments: []
   });
   post.save()
     .then(() => {
@@ -19,6 +21,42 @@ router.post('/', (req, res) => {
     })
     .catch(error => {
       res.status(500).json({message: error.message})
+    })
+});
+
+router.get('/', (req, res) => {
+  Post.find({})
+    .populate({
+      path: 'author',
+      model: User,
+    })
+    .then(posts => {
+      return getPosts(posts)
+    })
+    .then(promises => {
+      Promise.all(promises).then(values => res.json(values))
+    })
+});
+
+router.get('/:pid', (req, res) => {
+  Post.findOne({_id: req.params.pid})
+    .then(post => {
+      if (!post) {
+        throw new Error('Could not find post')
+      } else {
+        Promise.all(getComments(post.comments))
+          .then(comments => {
+            res.json({
+              title: post.title,
+              author: post.author.nickname,
+              content: post.content,
+              comments: comments
+            })
+          })
+      }
+    })
+    .catch(error => {
+      res.status(404).json({message: error.message})
     })
 });
 
@@ -32,7 +70,7 @@ router.post('/:pid/comments', (req, res) => {
         throw new Error('Could not find post')
       } else {
         post.comments.push({
-          writer: req.user._id,
+          author: req.user,
           content: content
         });
         post.save()
@@ -45,5 +83,36 @@ router.post('/:pid/comments', (req, res) => {
       res.status(404).json({message: error.message})
     });
 });
+
+const getComments = comments => {
+  return comments.map(comment => {
+    return new Promise(resolve => {
+      User.findOne({_id: comment.author}).then(user => {
+        resolve({
+          comment_id: comment._id,
+          author: user.nickname,
+          content: comment.content
+        })
+      })
+    })
+  })
+};
+
+const getPosts = posts => {
+  return posts.map(post => {
+    return new Promise(resolve => {
+      Promise.all(getComments(post.comments))
+        .then(comments => {
+          resolve({
+            post_id: post._id,
+            author: post.author.nickname,
+            title: post.title,
+            content: post.content,
+            comments: comments
+          })
+        })
+    })
+  })
+};
 
 module.exports = router;
