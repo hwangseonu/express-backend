@@ -23,6 +23,17 @@ const postSchema = new Schema({
 postSchema.plugin(autoIncrement.plugin, 'Post');
 commentSchema.plugin(autoIncrement.plugin, 'Comment');
 
-const postModel = mongoose.model('Post', postSchema);
+postSchema.statics.create = function(author, title, content) {
+  return new this({
+    author: author,
+    title: title,
+    content: content,
+    comments: []
+  }).save()
+};
 
-module.exports = postModel;
+postSchema.statics.findById = function(id) {
+  return this.findOne({_id: id})
+};
+
+module.exports = mongoose.model('Post', postSchema);

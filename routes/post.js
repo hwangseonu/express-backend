@@ -9,32 +9,25 @@ router.post('/', authMiddleware('access'));
 router.post('/', jsonMiddleware({title: 'string', content: 'string'}));
 router.post('/', (req, res) => {
   const { title, content } = req.body;
-  const post = new Post({
-    author: req.user,
-    title: title,
-    content: content,
-    comments: []
-  });
-  post.save()
+  Post.create(req.user, title, content)
     .then(() => {
-      res.status(201).json({message: 'Create post successfully!'})
+      res.status(201).end()
     })
-    .catch(error => {
+    .catch((error) => {
       res.status(500).json({message: error.message})
     })
 });
 
 router.get('/', (req, res) => {
-  Post.find({})
-    .populate({
-      path: 'author',
-      model: User,
-    })
-    .then(posts => {
-      return getPosts(posts)
+  Post.find()
+    .populate({path: 'author', model: 'User'})
+    .then((posts) => {
+      return all_posts(posts)
     })
     .then(promises => {
-      Promise.all(promises).then(values => res.json(values)).catch(error => res.status(404).json({message: error.message}))
+      Promise.all(promises).then((values) => {
+        res.json(values)
+      })
     })
 });
 
@@ -85,37 +78,50 @@ router.post('/:pid/comments', (req, res) => {
     });
 });
 
-const getComments = comments => {
-  return comments.map(comment => {
+const all_comments = function (comments) {
+  return comments.map((comment) => {
     return new Promise((resolve, reject) => {
       User.findOne({_id: comment.author})
-        .then(user => {
+        .then((user) => {
           resolve({
             comment_id: comment._id,
-            author: !user ? '탈퇴한 사용자' : user.nickname,
-            content: comment.content
+            author: user ? user.nickname : '탈퇴한 사용자',
+            content: comment.content,
+            createAt: comment.createAt,
+            updateAt: comment.updateAt
           })
-        }).catch(error => reject(error))
+        })
+        .catch((error) => {
+          reject(error)
+        })
     })
   })
 };
 
-const getPosts = posts => {
-  return posts.map(post => {
+const all_posts = function (posts) {
+  return posts.map((post) => {
     return new Promise((resolve, reject) => {
-      Promise.all(getComments(post.comments))
+      Promise.all(all_comments(post.comments))
         .then(comments => {
-          resolve({
-            post_id: post._id,
-            author: !post.author ? '탈퇴한 사용자' : post.author.nickname,
-            title: post.title,
-            content: post.content,
-            comments: comments
-          })
+          resolve(post_response(post, comments))
         })
-        .catch(error => reject(error))
+        .catch((error) => {
+          reject(error)
+        })
     })
   })
+};
+
+const post_response = function (post, comments) {
+  return {
+    post_id: post._id,
+    author: post.author ? post.author.nickname : '탈퇴한 사용자',
+    title: post.title,
+    content: post.content,
+    createAt: post.createAt,
+    updateAt: post.updateAt,
+    comments: comments
+  }
 };
 
 module.exports = router;

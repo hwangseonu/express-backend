@@ -10,6 +10,21 @@ const userSchema = new Schema({
   versionKey: false
 });
 
-const userModel = mongoose.model('User', userSchema);
+userSchema.statics.create = function (username, password, nickname, email) {
+  return new this({
+    username: username,
+    password: password,
+    nickname: nickname,
+    email: email
+  }).save()
+};
 
-module.exports = userModel;
+userSchema.statics.findByUsername = function (username) {
+  return this.findOne({username: username});
+};
+
+userSchema.methods.verify = function (password) {
+  return this.password === password;
+};
+
+module.exports = mongoose.model('User', userSchema);
