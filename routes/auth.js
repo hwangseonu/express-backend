@@ -2,7 +2,6 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const authMiddleware = require('../middlewares/auth');
 const jsonMiddleware = require('../middlewares/json');
-const crypto = require('crypto');
 const config = require('../config');
 const User = require('../models/user');
 
@@ -11,7 +10,6 @@ const router = express.Router();
 router.post('/', jsonMiddleware({username: 'string', password: 'string'}));
 router.post('/', (req, res) => {
   const { username, password } = req.body;
-  const encrypted = crypto.createHmac('sha512', config["password-secret"]).update(password).digest('base64');
   const secret = config.jwt.secret;
 
   User.findOne({username: username})
@@ -20,7 +18,7 @@ router.post('/', (req, res) => {
         throw new Error('Could not find user')
       } else {
         return new Promise((resolve, reject) => {
-          if (user.password !== encrypted) {
+          if (!user.verify(password)) {
             reject(new Error('incorrect password'))
           }
           Promise.all([generateToken(username, 'access', secret), generateToken(username, 'refresh', secret)]).then(values => {
@@ -61,14 +59,15 @@ router.get('/refresh', (req, res) => {
     })
 });
 
-const generateToken = (username, type, secret) => {
+const generateToken = (username, type) => {
+  const secret = config.jwt.secret;
   return new Promise((resolve1, reject1) => jwt.sign(
     {
       username: username,
     },
     secret,
     {
-      expiresIn: config.jwt[type + "-expire"],
+      expiresIn: config.jwt[type].expire,
       subject: type
     }, (err, token) => {
       if (err) reject1(err);
