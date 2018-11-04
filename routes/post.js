@@ -37,14 +37,9 @@ router.get('/:pid', (req, res) => {
       if (!post) {
         throw new Error('Could not find post')
       } else {
-        Promise.all(getComments(post.comments))
+        Promise.all(all_comments(post.comments))
           .then(comments => {
-            res.json({
-              title: post.title,
-              author: post.author.nickname,
-              content: post.content,
-              comments: comments
-            })
+            res.json(post_response(post, comments))
           })
           .catch(error => res.status(404).json({message: error.message}))
       }
@@ -63,11 +58,7 @@ router.post('/:pid/comments', (req, res) => {
       if (!post) {
         throw new Error('Could not find post')
       } else {
-        post.comments.push({
-          author: req.user,
-          content: content
-        });
-        post.save()
+        return post.addComment(req.user, content)
       }
     })
     .then(() => {
@@ -83,13 +74,7 @@ const all_comments = function (comments) {
     return new Promise((resolve, reject) => {
       User.findOne({_id: comment.author})
         .then((user) => {
-          resolve({
-            comment_id: comment._id,
-            author: user ? user.nickname : '탈퇴한 사용자',
-            content: comment.content,
-            createAt: comment.createAt,
-            updateAt: comment.updateAt
-          })
+          resolve(comment_response(user, comment))
         })
         .catch((error) => {
           reject(error)
@@ -98,16 +83,20 @@ const all_comments = function (comments) {
   })
 };
 
+const comment_response = function (author, comment) {
+  return {
+    comment_id: comment._id,
+    author: author ? author.nickname : '탈퇴한 사용자',
+    content: comment.content,
+    createAt: comment.createAt,
+    updateAt: comment.updateAt
+  }
+};
+
 const all_posts = function (posts) {
   return posts.map((post) => {
-    return new Promise((resolve, reject) => {
-      Promise.all(all_comments(post.comments))
-        .then(comments => {
-          resolve(post_response(post, comments))
-        })
-        .catch((error) => {
-          reject(error)
-        })
+    return new Promise((resolve) => {
+      resolve(post_response(post, post.comments.length))
     })
   })
 };

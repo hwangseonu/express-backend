@@ -36,4 +36,12 @@ postSchema.statics.findById = function(id) {
   return this.findOne({_id: id})
 };
 
+postSchema.methods.addComment = function(author, content) {
+  this.comments.push({
+    author: author,
+    content: content
+  });
+  return this.save();
+};
+
 module.exports = mongoose.model('Post', postSchema);
