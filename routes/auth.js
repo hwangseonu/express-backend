@@ -1,5 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const moment = require('moment');
 const authMiddleware = require('../middlewares/auth');
 const jsonMiddleware = require('../middlewares/json');
 const config = require('../config');
@@ -40,22 +41,13 @@ router.post('/', (req, res) => {
 router.get('/refresh', authMiddleware('refresh'));
 router.get('/refresh', (req, res) => {
   const secret = config.jwt.secret;
-  jwt.sign(
-    {
-      username: req.user.username
-    },
-    secret,
-    {
-      expiresIn: config.jwt["access-expire"],
-      subject: 'access'
-    }, (err, token) => {
-      if (err) {
-        res.status(422).json({message: err.message})
-      } else {
-        res.json({
-          access: token
-        })
+  Promise.all([generateToken(req.user.username, 'access', secret), generateToken(req.user.username, 'refresh', secret)])
+    .then(values => {
+      let data = {access: values[0]};
+      if (req.token_expiration - moment().unix() < 604800) {
+        data.refresh = values[1];
       }
+      res.json(data);
     })
 });
 
@@ -67,7 +59,7 @@ const generateToken = (username, type) => {
     },
     secret,
     {
-      expiresIn: config.jwt[type].expire,
+      expiresIn: config.jwt[type].expiration,
       subject: type
     }, (err, token) => {
       if (err) reject1(err);

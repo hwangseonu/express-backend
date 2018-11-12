@@ -86,7 +86,7 @@ const all_comments = function (comments) {
 const comment_response = function (author, comment) {
   return {
     comment_id: comment._id,
-    author: author ? author.nickname : '탈퇴한 사용자',
+    author: author ? author.nickname : null,
     content: comment.content,
     createAt: comment.createAt,
     updateAt: comment.updateAt
@@ -104,7 +104,7 @@ const all_posts = function (posts) {
 const post_response = function (post, comments) {
   return {
     post_id: post._id,
-    author: post.author ? post.author.nickname : '탈퇴한 사용자',
+    author: post.author ? post.author.nickname : null,
     title: post.title,
     content: post.content,
     createAt: post.createAt,

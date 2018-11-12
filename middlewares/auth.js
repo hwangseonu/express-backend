@@ -22,6 +22,9 @@ module.exports = (type) => {
               throw new Error('Could not find user')
             } else {
               req.user = user;
+              if (type === 'refresh') {
+                req.token_expiration = decoded.exp;
+              }
               next();
             }
           })
