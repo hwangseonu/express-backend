@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
-const {secret, access_expiration, refresh_expiration} = require('../config').jwt;
+const {secret, access_exp, refresh_exp} = require('../config').jwt;
 const json_required = require('../middlewares/json_required');
 
 const router = express.Router();
@@ -36,7 +36,7 @@ async function generateToken(username, type) {
       {username: username},
       secret,
       {
-        expiresIn: type === 'access' ? access_expiration : refresh_expiration,
+        expiresIn: type === 'access' ? access_exp : refresh_exp,
         subject: type
       }
     );
