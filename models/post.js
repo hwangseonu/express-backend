@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
-const autoInrement = require('mongoose-auto-increment');
+const autoIncrement = require('mongoose-auto-increment');
 const Schema = mongoose.Schema;
 
-autoInrement.initialize(mongoose.connection);
+autoIncrement.initialize(mongoose.connection);
 
 const postSchema = new Schema({
   author: {
@@ -29,6 +29,6 @@ const postSchema = new Schema({
   }
 });
 
-postSchema.plugin(autoInrement.plugin, 'Post');
+postSchema.plugin(autoIncrement.plugin, 'Post');
 
 module.exports = mongoose.model('Post', postSchema);
