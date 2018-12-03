@@ -31,8 +31,8 @@ router.post('/', async function (req, res, next) {
   }
 });
 
-router.get('/', auth_required('refresh'));
-router.get('/', async function (req, res, next) {
+router.get('/refresh', auth_required('refresh'));
+router.get('/refresh', async function (req, res, next) {
   const access = await generateToken(req.user.username, 'access');
   const refresh = await generateToken(req.user.username, 'refresh');
 
