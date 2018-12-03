@@ -10,7 +10,8 @@ router.post('/verify/:key', async function(req, res, next) {
   const q = {};
   q[key] = value;
   const user = await User.findOne(q);
-  res.status(user ? 409 : 200).send()
+  res.status(user ? 409 : 200).send();
+  next()
 });
 
 router.post('/', json_required({ username: 'string', password: 'string', nickname: 'string', email: 'string' }));
@@ -26,10 +27,10 @@ router.post('/', async function(req, res, next) {
     const result = await user.save();
     console.log(result);
     res.status(201).json(result);
+    next()
   } catch (error) {
     res.status(409).json(error)
   }
-  next()
 });
 
 module.exports = router;
