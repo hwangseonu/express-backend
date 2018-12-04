@@ -5,30 +5,29 @@ const {secret, access_exp, refresh_exp} = require('../config').jwt;
 const json_required = require('../middlewares/json_required');
 const auth_required = require('../middlewares/auth_required');
 
+const UnauthorizedError = require('../errors/UnauthorizedError');
+
 const router = express.Router();
 
 router.post('/', json_required({username: 'string', password: 'string'}));
 router.post('/', async function (req, res, next) {
   const {username, password} = req.body;
-  try {
-    const user = await User.findOne({username: username, password: password});
-    if (!user) {
-      throw new Error('Could not find user');
-    } else {
-      const access = await generateToken(username, 'access');
-      const refresh = await generateToken(username, 'refresh');
-      if (!access || !refresh) {
-        throw new Error('jwt error!');
-      }
-      res.json({
-        access: access,
-        refresh: refresh
-      });
-      next();
+  const user = await User.findOne({username: username, password: password});
+  if (!user) {
+    throw new Error('Could not find user');
+  } else {
+    const access = await generateToken(username, 'access');
+    const refresh = await generateToken(username, 'refresh');
+    if (!access || !refresh) {
+      next(new UnauthorizedError('jwt error!'));
+      return;
     }
-  } catch (error) {
-    res.status(401).json({message: error.message});
+    res.json({
+      access: access,
+      refresh: refresh
+    });
   }
+  next();
 });
 
 router.get('/refresh', auth_required('refresh'));
@@ -42,7 +41,8 @@ router.get('/refresh', async function (req, res, next) {
     result.refresh = refresh;
   }
 
-  res.json(result)
+  res.json(result);
+  next();
 });
 
 async function generateToken(username, type) {
@@ -56,7 +56,6 @@ async function generateToken(username, type) {
       }
     );
   } catch (error) {
-    console.error(error);
     return null;
   }
 }
